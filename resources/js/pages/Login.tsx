@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LogIn, ShieldCheck, BugPlay, Zap } from 'lucide-react'
+import { LogIn, Shield, ShieldCheck, Zap } from 'lucide-react'
 
 export default function Login() {
   const { login, demoLogin, loading } = useAuth()
@@ -66,7 +66,7 @@ export default function Login() {
 
       <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }} className="slide-in-up">
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -75,27 +75,25 @@ export default function Login() {
             fontSize: '2.25rem',
             color: 'var(--color-primary-light)',
             textShadow: '0 0 40px rgba(192, 132, 252, 0.55)',
-            marginBottom: '1.25rem',
           }}>
             <Zap size={30} fill="currentColor" />
             NovaPass
           </div>
 
-          {/* Shield badge with glow */}
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
-            background: 'rgba(147, 51, 234, 0.12)',
-            border: '1px solid rgba(147, 51, 234, 0.35)',
+            background: 'rgba(147, 51, 234, 0.1)',
+            border: '1px solid rgba(147, 51, 234, 0.25)',
             borderRadius: '999px',
-            padding: '0.5rem 1.25rem',
-            fontSize: '0.8125rem',
-            color: 'var(--color-primary-light)',
-            fontWeight: 600,
-            boxShadow: '0 0 20px rgba(147, 51, 234, 0.25), inset 0 1px 0 rgba(255,255,255,0.06)',
+            padding: '0.375rem 0.875rem',
+            fontSize: '0.75rem',
+            color: 'var(--color-text-muted)',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase' as const,
           }}>
-            <ShieldCheck size={14} />
+            <Shield size={12} />
             Control de Acceso
           </div>
         </div>
@@ -176,10 +174,11 @@ export default function Login() {
             type="button"
             onClick={demoLogin}
             disabled={loading}
-            className="btn btn-outline btn-lg"
+            className="btn btn-outline"
+            style={{ width: '100%', gap: '0.625rem' }}
           >
-            <BugPlay size={18} />
-            Modo Demo (sin backend)
+            <Zap size={16} style={{ color: 'var(--color-cta)' }} />
+            Modo demo
           </button>
         </div>
 
