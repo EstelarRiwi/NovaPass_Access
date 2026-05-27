@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Scanner from './pages/Scanner'
 import ErrorBoundary from './components/ErrorBoundary'
+import NotFound from './pages/NotFound'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -16,6 +17,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><ErrorBoundary><Scanner /></ErrorBoundary></ProtectedRoute>} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
