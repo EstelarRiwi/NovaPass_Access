@@ -22,7 +22,7 @@ const DEMO_CATEGORIES = ['VIP', 'Palco', 'General', 'Platea']
 function demoValidate(token: string): Promise<ValidationResult> {
   const delay = 400 + Math.random() * 600
   return new Promise(resolve => setTimeout(() => {
-    const isDemoToken = token.startsWith('demo_') || token.length < 8
+    const isDemoToken = token === 'demo_scanner_token_2026'
     if (isDemoToken) {
       resolve({
         valid: true,
