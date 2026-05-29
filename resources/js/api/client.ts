@@ -5,6 +5,11 @@ function getToken(): string | null {
   return localStorage.getItem('token')
 }
 
+function setToken(token: string | null) {
+  if (token) localStorage.setItem('token', token)
+  else localStorage.removeItem('token')
+}
+
 function isTokenExpired(): boolean {
   const token = getToken()
   if (!token) return true
@@ -18,11 +23,6 @@ function isTokenExpired(): boolean {
   }
 }
 
-function setToken(token: string | null) {
-  if (token) localStorage.setItem('token', token)
-  else localStorage.removeItem('token')
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -33,8 +33,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
 
-  if (res.status === 401 && isTokenExpired()) {
-    if (!redirecting) {
+  if (res.status === 401) {
+    if (!redirecting && isTokenExpired()) {
       redirecting = true
       setToken(null)
       localStorage.removeItem('user')
@@ -44,11 +44,21 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Error' }))
-    throw new Error(error.message || `HTTP ${res.status}`)
+    const body = await res.json().catch(() => ({}))
+    const message = body.error?.message || body.message || body.error?.code || `HTTP ${res.status}`
+    throw new Error(message)
   }
 
-  return res.json()
+  const json = await res.json()
+
+  if (json && typeof json === 'object' && 'success' in json) {
+    if (!json.success) {
+      throw new Error(json.error?.message || json.error?.code || 'Request failed')
+    }
+    return json.data as T
+  }
+
+  return json as T
 }
 
 export const api = {

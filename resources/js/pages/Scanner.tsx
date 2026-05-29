@@ -27,7 +27,7 @@ function playBeep(ok: boolean) {
 export default function Scanner() {
   const { logout } = useAuth()
   const { validate, result, loading, reset } = useValidation()
-  const { count, eventName, startPolling } = useEntryCount()
+  const { count, increment } = useEntryCount()
 
   const [mode, setMode] = useState<'camera' | 'scanner' | 'manual'>('scanner')
   const [manualInput, setManualInput] = useState('')
@@ -38,11 +38,11 @@ export default function Scanner() {
   const scanBufferRef = useRef('')
   const scanTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const isRunningRef = useRef(false)
+  // Use ref to read loading inside event listener without stale closure
+  const loadingRef = useRef(false)
+  useEffect(() => { loadingRef.current = loading }, [loading])
 
-  useEffect(() => {
-    startPolling()
-  }, [])
-
+  // Camera mode lifecycle
   useEffect(() => {
     if (mode !== 'camera') return
 
@@ -51,18 +51,17 @@ export default function Scanner() {
       try {
         const scanner = new Html5Qrcode(SCANNER_ID)
         scannerRef.current = scanner
-
         await scanner.start(
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText) => {
-            if (mounted && !loading) handleScan(decodedText)
+            if (mounted && !loadingRef.current) handleScan(decodedText)
           },
           () => {}
         )
         isRunningRef.current = true
       } catch {
-        if (mounted) setCameraError('No se pudo iniciar la cámara. Usa el modo manual.')
+        if (mounted) setCameraError('No se pudo iniciar la cámara. Verifica los permisos o usa el modo manual.')
       }
     }
 
@@ -75,8 +74,9 @@ export default function Scanner() {
         isRunningRef.current = false
       }
     }
-  }, [mode])
+  }, [mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Keyboard wedge / physical scanner listener
   useEffect(() => {
     if (mode === 'manual') return
 
@@ -90,7 +90,7 @@ export default function Scanner() {
         const code = scanBufferRef.current
         scanBufferRef.current = ''
         e.preventDefault()
-        handleScan(code)
+        if (!loadingRef.current) handleScan(code)
         return
       }
 
@@ -98,7 +98,7 @@ export default function Scanner() {
         scanTimerRef.current = setTimeout(() => {
           const code = scanBufferRef.current
           scanBufferRef.current = ''
-          if (code.length >= 5) handleScan(code)
+          if (code.length >= 5 && !loadingRef.current) handleScan(code)
         }, 150)
       }
     }
@@ -108,18 +108,19 @@ export default function Scanner() {
       window.removeEventListener('keydown', handler)
       clearTimeout(scanTimerRef.current)
     }
-  }, [mode])
+  }, [mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleScan = useCallback(async (token: string) => {
-    if (loading) return
+    if (loadingRef.current) return
     const res = await validate(token.trim())
     playBeep(res?.valid ?? false)
     navigator.vibrate?.(res?.valid ? 100 : 300)
     if (res?.valid) {
+      increment()
       setScanSuccess(true)
       setTimeout(() => setScanSuccess(false), 1500)
     }
-  }, [validate, loading])
+  }, [validate, increment])
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -173,19 +174,17 @@ export default function Scanner() {
           }}>
             NovaPass
           </span>
-          {eventName && (
-            <span style={{
-              marginLeft: '0.5rem',
-              fontSize: '0.75rem',
-              color: 'var(--color-text-muted)',
-              background: 'var(--glass-bg)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '999px',
-              padding: '0.2rem 0.625rem',
-            }}>
-              {eventName}
-            </span>
-          )}
+          <span style={{
+            marginLeft: '0.5rem',
+            fontSize: '0.75rem',
+            color: 'var(--color-text-muted)',
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '999px',
+            padding: '0.2rem 0.625rem',
+          }}>
+            Control de Acceso
+          </span>
         </div>
 
         <button
@@ -220,7 +219,7 @@ export default function Scanner() {
             display: 'inline-block',
           }} />
           <span style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-            En vivo
+            Sesión
           </span>
         </div>
 
@@ -305,7 +304,6 @@ export default function Scanner() {
           }}>
             {/* Animated rings + icon */}
             <div style={{ position: 'relative', width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {/* Outer ring */}
               <div style={{
                 position: 'absolute',
                 inset: -20,
@@ -313,7 +311,6 @@ export default function Scanner() {
                 border: '2px solid rgba(147, 51, 234, 0.25)',
                 animation: 'pulse-ring 2.4s ease-out infinite',
               }} />
-              {/* Mid ring */}
               <div style={{
                 position: 'absolute',
                 inset: -8,
@@ -321,7 +318,6 @@ export default function Scanner() {
                 border: '2px solid rgba(147, 51, 234, 0.35)',
                 animation: 'pulse-ring 2.4s ease-out infinite 0.6s',
               }} />
-              {/* Inner ring */}
               <div style={{
                 position: 'absolute',
                 inset: 2,
@@ -329,7 +325,6 @@ export default function Scanner() {
                 border: '2px solid rgba(147, 51, 234, 0.5)',
                 animation: 'pulse-ring 2.4s ease-out infinite 1.2s',
               }} />
-              {/* Icon circle */}
               <div style={{
                 width: 100,
                 height: 100,
