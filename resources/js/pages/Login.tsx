@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LogIn, Shield, ShieldCheck, Zap } from 'lucide-react'
+import { LogIn, ScanLine, ShieldCheck, Zap } from 'lucide-react'
 
 export default function Login() {
   const { login, loading } = useAuth()
@@ -29,86 +29,55 @@ export default function Login() {
       overflow: 'hidden',
       padding: '2rem 1.5rem',
     }}>
-      {/* Animated glow orbs */}
       <div style={{
-        position: 'absolute',
-        width: 600,
-        height: 600,
-        borderRadius: '50%',
+        position: 'absolute', width: 600, height: 600, borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(147, 51, 234, 0.2) 0%, transparent 70%)',
-        top: -200,
-        right: -180,
-        pointerEvents: 'none',
+        top: -200, right: -180, pointerEvents: 'none',
         animation: 'float 9s ease-in-out infinite',
       }} />
       <div style={{
-        position: 'absolute',
-        width: 400,
-        height: 400,
-        borderRadius: '50%',
+        position: 'absolute', width: 400, height: 400, borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(245, 158, 11, 0.09) 0%, transparent 70%)',
-        bottom: -120,
-        left: -100,
-        pointerEvents: 'none',
+        bottom: -120, left: -100, pointerEvents: 'none',
         animation: 'float-reverse 12s ease-in-out infinite',
       }} />
       <div style={{
-        position: 'absolute',
-        width: 280,
-        height: 280,
-        borderRadius: '50%',
+        position: 'absolute', width: 280, height: 280, borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(147, 51, 234, 0.1) 0%, transparent 70%)',
-        bottom: '30%',
-        right: '10%',
-        pointerEvents: 'none',
+        bottom: '30%', right: '10%', pointerEvents: 'none',
         animation: 'float 14s ease-in-out infinite 3s',
       }} />
 
       <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }} className="slide-in-up">
-        {/* Logo */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
           <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.625rem',
-            fontFamily: 'var(--font-heading)',
-            fontSize: '2.25rem',
+            display: 'inline-flex', alignItems: 'center', gap: '0.625rem',
+            fontFamily: 'var(--font-heading)', fontSize: '2.25rem',
             color: 'var(--color-primary-light)',
             textShadow: '0 0 40px rgba(192, 132, 252, 0.55)',
           }}>
             <Zap size={30} fill="currentColor" />
             NovaPass
           </div>
-
           <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
             background: 'rgba(147, 51, 234, 0.1)',
             border: '1px solid rgba(147, 51, 234, 0.25)',
-            borderRadius: '999px',
-            padding: '0.375rem 0.875rem',
-            fontSize: '0.75rem',
-            color: 'var(--color-text-muted)',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase' as const,
+            borderRadius: '999px', padding: '0.375rem 0.875rem',
+            fontSize: '0.75rem', color: 'var(--color-text-muted)',
+            letterSpacing: '0.05em', textTransform: 'uppercase' as const,
           }}>
-            <Shield size={12} />
+            <ScanLine size={12} />
             Control de Acceso
           </div>
         </div>
 
-        {/* Card */}
         <div className="card" style={{ padding: '2rem 2rem 1.75rem' }}>
           <h2 style={{
-            textAlign: 'center',
-            fontSize: '1.375rem',
-            marginBottom: '1.75rem',
+            textAlign: 'center', fontSize: '1.375rem', marginBottom: '1.75rem',
             fontFamily: 'var(--font-heading)',
             background: 'linear-gradient(135deg, var(--color-text) 0%, var(--color-primary-light) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
             Iniciar Sesión
           </h2>
@@ -121,13 +90,13 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
-              <label htmlFor="email">Usuario</label>
+              <label htmlFor="email">Correo electrónico</label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="correo@ejemplo.com"
+                placeholder="porteria@estelar.com"
                 required
                 autoFocus
               />
@@ -149,24 +118,18 @@ export default function Login() {
               disabled={loading}
               style={{ marginTop: '0.5rem' }}
             >
-              {loading ? (
-                <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} />
-              ) : (
-                <><LogIn size={18} /> Ingresar</>
-              )}
+              {loading
+                ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} />
+                : <><LogIn size={18} /> Ingresar</>
+              }
             </button>
           </form>
         </div>
 
         <p style={{
-          textAlign: 'center',
-          marginTop: '1.75rem',
-          fontSize: '0.8125rem',
+          textAlign: 'center', marginTop: '1.75rem', fontSize: '0.8125rem',
           color: 'var(--color-text-muted)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.375rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
         }}>
           <ShieldCheck size={13} />
           Solo para personal de portería autorizado
