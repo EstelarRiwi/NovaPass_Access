@@ -58,6 +58,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
+            sudo rm -rf /var/lib/containerd/io.containerd.content.v1.content/ingest/* 2>/dev/null || true
             cd /var/www/novapass_access || git clone https://github.com/EstelarRiwi/NovaPass_Access.git /var/www/novapass_access
             cd /var/www/novapass_access
             git pull
