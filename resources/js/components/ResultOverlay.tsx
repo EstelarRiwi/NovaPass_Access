@@ -8,7 +8,7 @@ interface Props {
 
 export default function ResultOverlay({ result, onClose }: Props) {
   const isGreen = result.valid
-  const isFraud = !result.valid && (result.reason?.toLowerCase().includes('usado') ?? false)
+  const isFraud = !result.valid && !!(result.reason?.toLowerCase().includes('usad') || result.reason?.toLowerCase().includes('already'))
 
   return (
     <div
