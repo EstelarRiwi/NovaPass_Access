@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { useValidation } from '../hooks/useValidation'
 import { useEntryCount } from '../hooks/useEntryCount'
 import { useAuth } from '../context/AuthContext'
@@ -64,12 +64,16 @@ export default function Scanner() {
     let mounted = true
     const start = async () => {
       try {
-        const scanner = new Html5Qrcode(SCANNER_ID)
+        const scanner = new Html5Qrcode(SCANNER_ID, { verbose: false, formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE] })
         scannerRef.current = scanner
         await scanner.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 220, height: 220 } },
-          (decodedText) => { if (mounted && !loading) handleScan(decodedText) },
+          {
+            fps: 15,
+            qrbox: { width: 250, height: 250 },
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+          },
+          (decodedText) => { if (mounted) handleScanRef.current(decodedText) },
           () => {}
         )
         isRunningRef.current = true
@@ -132,7 +136,6 @@ export default function Scanner() {
 
     setScanning(false)
 
-    // Update recent scans
     const isUsed = !res?.valid && res?.reason?.toLowerCase().includes('usado')
     const scanEntry: RecentScan = {
       id: Date.now().toString(),
@@ -143,6 +146,10 @@ export default function Scanner() {
     }
     setRecentScans(prev => [scanEntry, ...prev].slice(0, 5))
   }, [validate, loading])
+
+  // Always-current ref so camera callback never holds a stale closure
+  const handleScanRef = useRef(handleScan)
+  handleScanRef.current = handleScan
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
