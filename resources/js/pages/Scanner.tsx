@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
+import { Html5Qrcode } from 'html5-qrcode'
 import { useValidation } from '../hooks/useValidation'
 import { useEntryCount } from '../hooks/useEntryCount'
 import { useAuth } from '../context/AuthContext'
@@ -64,15 +64,11 @@ export default function Scanner() {
     let mounted = true
     const start = async () => {
       try {
-        const scanner = new Html5Qrcode(SCANNER_ID, { verbose: false, formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE] })
+        const scanner = new Html5Qrcode(SCANNER_ID)
         scannerRef.current = scanner
         await scanner.start(
           { facingMode: 'environment' },
-          {
-            fps: 15,
-            qrbox: { width: 250, height: 250 },
-            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-          },
+          { fps: 15 },
           (decodedText) => { if (mounted) handleScanRef.current(decodedText) },
           () => {}
         )
