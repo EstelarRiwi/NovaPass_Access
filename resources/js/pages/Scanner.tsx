@@ -207,7 +207,7 @@ export default function Scanner() {
           {!scanning && <div className="vf-pulse" />}
 
           {mode === 'camera' ? (
-            /* Camera mode — QR scanner fills the viewfinder */
+            /* Camera mode — feed + corner bracket overlay */
             <div style={{ position: 'absolute', inset: 0 }}>
               {cameraError ? (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', zIndex: 5 }}>
@@ -218,6 +218,16 @@ export default function Scanner() {
                 </div>
               ) : (
                 <div id={SCANNER_ID} style={{ width: '100%', height: '100%' }} />
+              )}
+              {/* Corner brackets over camera feed */}
+              {!cameraError && (
+                <div className="vf-frame" style={{ pointerEvents: 'none' }}>
+                  <div className="corner tl" />
+                  <div className="corner tr" />
+                  <div className="corner bl" />
+                  <div className="corner br" />
+                  {scanning && <div className="vf-scanline" />}
+                </div>
               )}
             </div>
           ) : mode === 'manual' ? (
@@ -243,16 +253,37 @@ export default function Scanner() {
               </form>
             </div>
           ) : (
-            /* Scanner / keyboard wedge mode — show corner brackets */
-            <>
-              <div className="vf-frame">
-                <div className="corner tl" />
-                <div className="corner tr" />
-                <div className="corner bl" />
-                <div className="corner br" />
-                {scanning && <div className="vf-scanline" />}
+            /* Physical scanner (keyboard wedge) mode — AON HS-200 waiting UI */
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.1rem', zIndex: 5 }}>
+              <div style={{
+                width: 80, height: 80, borderRadius: 20,
+                background: scanning ? 'rgba(167,139,250,0.25)' : 'rgba(255,255,255,0.07)',
+                border: `2px solid ${scanning ? 'rgba(167,139,250,0.7)' : 'rgba(255,255,255,0.15)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s',
+              }}>
+                <ScanLine size={36} style={{ color: scanning ? '#a78bfa' : 'rgba(255,255,255,0.5)' }} />
               </div>
-            </>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.88rem', marginBottom: '0.25rem' }}>
+                  {scanning ? 'Leyendo…' : 'Esperando escaneo'}
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.06em' }}>
+                  AON HS-200 conectado
+                </div>
+              </div>
+              <div style={{
+                display: 'flex', gap: '4px', alignItems: 'center',
+              }}>
+                {[0, 1, 2].map(i => (
+                  <div key={i} style={{
+                    width: 6, height: 6, borderRadius: '50%',
+                    background: scanning ? '#a78bfa' : 'rgba(255,255,255,0.25)',
+                    animation: scanning ? `pulse 0.6s ease ${i * 0.15}s infinite` : 'none',
+                  }} />
+                ))}
+              </div>
+            </div>
           )}
 
           <div className="vf-hint">
