@@ -6,14 +6,14 @@ export interface ValidationResult {
   reason?: string
   ticket?: {
     customer_name: string
-    seat: string | null
+    category: string | null
   }
 }
 
 interface ApiValidationResponse {
   state: 'valid' | 'used' | 'fake'
   customerName: string | null
-  seat: string | null
+  categoryName: string | null
 }
 
 function mapApiResponse(data: ApiValidationResponse): ValidationResult {
@@ -22,7 +22,7 @@ function mapApiResponse(data: ApiValidationResponse): ValidationResult {
       valid: true,
       ticket: {
         customer_name: data.customerName ?? 'Desconocido',
-        seat: data.seat,
+        category: data.categoryName,
       },
     }
   }

@@ -1,5 +1,5 @@
 import type { ValidationResult } from '../hooks/useValidation'
-import { CheckCircle, XCircle, AlertTriangle, User, MapPin } from 'lucide-react'
+import { CheckCircle, XCircle, AlertTriangle, User, Tag, Hash } from 'lucide-react'
 
 interface Props {
   result: ValidationResult
@@ -161,16 +161,18 @@ export default function ResultOverlay({ result, onClose }: Props) {
               </span>
             </div>
 
-            {result.ticket.seat && (
-              <>
-                <div style={{ height: 1, background: borderColor }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.9375rem' }}>
-                  <MapPin size={15} color={accentColor} />
-                  <span style={{ color: 'var(--color-text-muted)' }}>Puesto:</span>
-                  <span style={{ fontWeight: 600 }}>{result.ticket.seat}</span>
-                </div>
-              </>
-            )}
+            <div style={{ height: 1, background: borderColor }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.9375rem' }}>
+              <Tag size={15} color={accentColor} />
+              <span style={{ color: 'var(--color-text-muted)' }}>Tipo:</span>
+              <span style={{ fontWeight: 600 }}>{result.ticket.category ?? 'General'}</span>
+            </div>
+            <div style={{ height: 1, background: borderColor }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.9375rem' }}>
+              <Hash size={15} color={accentColor} />
+              <span style={{ color: 'var(--color-text-muted)' }}>Cantidad:</span>
+              <span style={{ fontWeight: 600 }}>1</span>
+            </div>
           </div>
         )}
 
