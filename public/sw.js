@@ -1,7 +1,6 @@
-const CACHE_NAME = 'novapass-access-v1'
+const CACHE_NAME = 'novapass-access-v2'
 
 const PRECACHE_URLS = [
-  '/',
   '/manifest.json',
   '/favicon.svg',
 ]
@@ -29,14 +28,30 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
+  // API: network-first with offline fallback
   if (event.request.url.includes('/api/')) {
     event.respondWith(networkFirst(event.request))
     return
   }
 
+  // HTML navigation: always network-first so new deployments are always picked up
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/') || new Response('Offline', { status: 503 }))
+    )
+    return
+  }
+
+  // Static assets (JS, CSS, images): cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request)
+      return cached || fetch(event.request).then((response) => {
+        if (response.ok) {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+        }
+        return response
+      })
     })
   )
 })
