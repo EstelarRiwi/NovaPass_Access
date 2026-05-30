@@ -315,7 +315,7 @@ body {
 @keyframes flash { 0% { opacity: 0; } 30% { opacity: 0.85; } 100% { opacity: 0; } }
 
 /* ---- sim controls (bottom of viewfinder) ---- */
-.acc-sim { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.1rem 1.2rem 1.5rem; display: flex; flex-direction: column; gap: 0.7rem; background: linear-gradient(to top, #0d0718 55%, transparent); }
+.acc-sim { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; padding: 1.1rem 1.2rem 1.5rem; display: flex; flex-direction: column; gap: 0.7rem; background: linear-gradient(to top, #0d0718 55%, transparent); }
 .acc-scan-btn { width: 100%; padding: 1.05rem; border-radius: 18px; background: var(--color-cta); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.6rem; box-shadow: var(--glow-cta); transition: transform .2s var(--ease); font-family: var(--font-body); }
 .acc-scan-btn:hover { transform: translateY(-2px); }
 .acc-scan-btn:disabled { opacity: 0.6; }
