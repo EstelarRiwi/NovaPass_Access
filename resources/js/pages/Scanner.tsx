@@ -3,10 +3,11 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { useValidation } from '../hooks/useValidation'
 import { useEntryCount } from '../hooks/useEntryCount'
 import { useAuth } from '../context/AuthContext'
-import { ScanLine, Keyboard, Barcode, Users, LogOut, Zap } from 'lucide-react'
+import { ScanLine, Keyboard, Barcode, LogOut, Check, X, RotateCcw } from 'lucide-react'
 import ResultOverlay from '../components/ResultOverlay'
 
 const SCANNER_ID = 'qr-scanner'
+const TOTAL_CAPACITY = 3000
 
 function playBeep(ok: boolean) {
   try {
@@ -24,24 +25,37 @@ function playBeep(ok: boolean) {
   } catch {}
 }
 
+interface RecentScan {
+  id: string
+  name: string
+  seat: string
+  result: 'valid' | 'used' | 'fake'
+  time: string
+}
+
 export default function Scanner() {
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
   const { validate, result, loading, reset } = useValidation()
   const { count, eventName, startPolling } = useEntryCount()
 
   const [mode, setMode] = useState<'camera' | 'scanner' | 'manual'>('scanner')
   const [manualInput, setManualInput] = useState('')
-  const [scanSuccess, setScanSuccess] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  const [flash, setFlash] = useState(false)
   const [cameraError, setCameraError] = useState('')
+  const [recentScans, setRecentScans] = useState<RecentScan[]>([])
+
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const manualRef = useRef<HTMLInputElement>(null)
   const scanBufferRef = useRef('')
   const scanTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const isRunningRef = useRef(false)
 
-  useEffect(() => {
-    startPolling()
-  }, [])
+  const pct = Math.min(100, Math.round((count / TOTAL_CAPACITY) * 100))
+
+  const now = () => new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+
+  useEffect(() => { startPolling() }, [])
 
   // Camera scanner
   useEffect(() => {
@@ -52,27 +66,19 @@ export default function Scanner() {
       try {
         const scanner = new Html5Qrcode(SCANNER_ID)
         scannerRef.current = scanner
-
         await scanner.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          (decodedText) => {
-            if (mounted && !loading) {
-              handleScan(decodedText)
-            }
-          },
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          (decodedText) => { if (mounted && !loading) handleScan(decodedText) },
           () => {}
         )
         isRunningRef.current = true
-      } catch (err) {
-        if (mounted) {
-          setCameraError('No se pudo iniciar la cámara. Usa el modo manual.')
-        }
+      } catch {
+        if (mounted) setCameraError('No se pudo iniciar la cámara. Usa el modo manual.')
       }
     }
 
     start()
-
     return () => {
       mounted = false
       if (isRunningRef.current) {
@@ -82,7 +88,7 @@ export default function Scanner() {
     }
   }, [mode])
 
-  // Keyboard wedge reader (physical scanner) — scanner & camera modes
+  // Keyboard wedge (physical scanner)
   useEffect(() => {
     if (mode === 'manual') return
 
@@ -91,7 +97,6 @@ export default function Scanner() {
         scanBufferRef.current += e.key
         clearTimeout(scanTimerRef.current)
       }
-
       if (e.key === 'Enter' && scanBufferRef.current.length > 0) {
         const code = scanBufferRef.current
         scanBufferRef.current = ''
@@ -99,14 +104,11 @@ export default function Scanner() {
         handleScan(code)
         return
       }
-
       if (e.key.length === 1) {
         scanTimerRef.current = setTimeout(() => {
           const code = scanBufferRef.current
           scanBufferRef.current = ''
-          if (code.length >= 5) {
-            handleScan(code)
-          }
+          if (code.length >= 5) handleScan(code)
         }, 150)
       }
     }
@@ -120,13 +122,26 @@ export default function Scanner() {
 
   const handleScan = useCallback(async (token: string) => {
     if (loading) return
+    setScanning(true)
+    setFlash(true)
+    setTimeout(() => setFlash(false), 460)
+
     const res = await validate(token.trim())
     playBeep(res?.valid ?? false)
     navigator.vibrate?.(res?.valid ? 100 : 300)
-    if (res?.valid) {
-      setScanSuccess(true)
-      setTimeout(() => setScanSuccess(false), 1500)
+
+    setScanning(false)
+
+    // Update recent scans
+    const isUsed = !res?.valid && res?.reason?.toLowerCase().includes('usado')
+    const scanEntry: RecentScan = {
+      id: Date.now().toString(),
+      name: res?.ticket?.customer_name || (res?.valid ? 'Cliente' : 'QR no reconocido'),
+      seat: res?.ticket ? `${res.ticket.category} · ${res.ticket.seat}` : (isUsed ? 'Entrada ya usada' : 'QR falso detectado'),
+      result: res?.valid ? 'valid' : (isUsed ? 'used' : 'fake'),
+      time: now(),
     }
+    setRecentScans(prev => [scanEntry, ...prev].slice(0, 5))
   }, [validate, loading])
 
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -144,267 +159,178 @@ export default function Scanner() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'var(--color-bg)',
-    }}>
-      {/* Top bar */}
-      <header style={{
-        background: 'var(--color-primary-dark)',
-        color: 'white',
-        padding: '0.75rem 1rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Zap size={20} />
-          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.125rem' }}>NovaPass</span>
+    <div className="acc-stage">
+      {/* Brand header above phone */}
+      <div className="acc-stage-head">
+        <div className="brand">
+          <span className="mark">
+            <ScanLine size={19} />
+          </span>
+          NovaPass <span style={{ fontWeight: 500, opacity: 0.7 }}>Acceso</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {eventName && (
-            <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>{eventName}</span>
+        <div className="tag">Control de entrada · Personal autorizado</div>
+      </div>
+
+      {/* Phone frame */}
+      <div className="phone">
+        <div className="phone-notch" />
+        <div className="phone-status">
+          <span>{now()}</span>
+          <span style={{ display: 'flex', gap: 5, alignItems: 'center', fontSize: '0.72rem' }}>
+            <span>5G</span>
+            <span>92%</span>
+          </span>
+        </div>
+
+        {/* Top bar */}
+        <div className="acc-top">
+          <div className="who">
+            <div className="av" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>
+              {user?.name?.charAt(0)?.toUpperCase() || 'S'}
+            </div>
+            <div>
+              <div className="nm">{user?.name || 'Scanner'}</div>
+              <div className="gt">{eventName || 'Puerta Principal'}</div>
+            </div>
+          </div>
+          <button className="acc-logout" onClick={logout} aria-label="Salir">
+            <LogOut size={18} />
+          </button>
+        </div>
+
+        {/* Live counter */}
+        <div className="acc-counter">
+          <div className="ring" style={{ '--p': pct } as React.CSSProperties}>
+            <div className="rin">
+              <b>{pct}%</b>
+              <span>Aforo</span>
+            </div>
+          </div>
+          <div className="acc-counter-meta">
+            <div className="ev">{eventName || 'Evento en curso'}</div>
+            <div className="vn">Control de acceso activo</div>
+            <div className="acc-counter-stats">
+              <div><span className="dot-g" /><b>{count.toLocaleString('es-CO')}</b> ingresos</div>
+              <div><span className="dot-r" /><b>{recentScans.filter(s => s.result !== 'valid').length}</b> rechazos</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Viewfinder */}
+        <div className="acc-view">
+          <div className="vf-cam" />
+          {!scanning && <div className="vf-pulse" />}
+
+          {mode === 'camera' ? (
+            /* Camera mode — QR scanner fills the viewfinder */
+            <div style={{ position: 'absolute', inset: 0 }}>
+              {cameraError ? (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', textAlign: 'center', zIndex: 5 }}>
+                  <p style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '1rem', fontSize: '0.88rem' }}>{cameraError}</p>
+                  <button onClick={() => setMode('scanner')} className="acc-scan-btn" style={{ width: 'auto', padding: '0.7rem 1.4rem' }}>
+                    Usar Lector Físico
+                  </button>
+                </div>
+              ) : (
+                <div id={SCANNER_ID} style={{ width: '100%', height: '100%' }} />
+              )}
+            </div>
+          ) : mode === 'manual' ? (
+            /* Manual mode — form inside viewfinder */
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', zIndex: 5 }}>
+              <form onSubmit={handleManualSubmit} style={{ width: '100%', maxWidth: 260, display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+                <input
+                  ref={manualRef}
+                  type="text"
+                  value={manualInput}
+                  onChange={e => setManualInput(e.target.value)}
+                  placeholder="Ingresa el código QR..."
+                  autoFocus
+                  style={{ background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: 12, padding: '0.85rem 1rem', color: '#fff', fontSize: '0.92rem', textAlign: 'center' }}
+                />
+                <button
+                  type="submit"
+                  className="acc-scan-btn"
+                  disabled={loading || !manualInput.trim()}
+                >
+                  {loading ? <span className="spinner" style={{ width: 18, height: 18, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> : <><Keyboard size={17} /> Validar</>}
+                </button>
+              </form>
+            </div>
+          ) : (
+            /* Scanner / keyboard wedge mode — show corner brackets */
+            <>
+              <div className="vf-frame">
+                <div className="corner tl" />
+                <div className="corner tr" />
+                <div className="corner bl" />
+                <div className="corner br" />
+                {scanning && <div className="vf-scanline" />}
+              </div>
+            </>
           )}
-          <button onClick={logout} style={{
-            background: 'rgba(255,255,255,0.15)',
-            color: 'white',
-            border: 'none',
-            padding: '0.375rem 0.75rem',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.75rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-          }}>
-            <LogOut size={14} /> Salir
-          </button>
-        </div>
-      </header>
 
-      {/* Entry count bar */}
-      <div style={{
-        background: 'white',
-        borderBottom: '1px solid var(--color-border)',
-        padding: '0.5rem 1rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.5rem',
-        fontSize: '0.875rem',
-        color: 'var(--color-text-muted)',
-      }}>
-        <Users size={16} />
-        <span>Ingresos: <strong style={{ color: 'var(--color-primary)', fontSize: '1.125rem' }}>{count}</strong></span>
-      </div>
+          <div className="vf-hint">
+            {scanning ? 'Leyendo código QR…' : mode === 'manual' ? 'Ingreso manual activo' : 'Apunta al QR de la entrada'}
+          </div>
+          <div className={`vf-flash ${flash ? 'on' : ''}`} />
 
-      {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
-        {/* Mode toggle */}
-        <div style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginBottom: '1rem',
-          background: 'white',
-          borderRadius: 'var(--radius-md)',
-          padding: '0.375rem',
-          boxShadow: 'var(--shadow-sm)',
-        }}>
-          <button
-            onClick={() => { setMode('scanner'); setCameraError(''); reset() }}
-            style={{
-              flex: 1,
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              background: mode === 'scanner' ? 'var(--color-primary)' : 'transparent',
-              color: mode === 'scanner' ? 'white' : 'var(--color-text)',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <Barcode size={18} /> Lector
-          </button>
-          <button
-            onClick={() => { setMode('camera'); setCameraError(''); reset() }}
-            style={{
-              flex: 1,
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              background: mode === 'camera' ? 'var(--color-primary)' : 'transparent',
-              color: mode === 'camera' ? 'white' : 'var(--color-text)',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <ScanLine size={18} /> Cámara
-          </button>
-          <button
-            onClick={() => { setMode('manual'); reset() }}
-            style={{
-              flex: 1,
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              background: mode === 'manual' ? 'var(--color-primary)' : 'transparent',
-              color: mode === 'manual' ? 'white' : 'var(--color-text)',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <Keyboard size={18} /> Manual
-          </button>
+          {/* Sim controls at bottom of viewfinder */}
+          <div className="acc-sim">
+            {mode === 'scanner' && (
+              <button className="acc-scan-btn" disabled={scanning} onClick={() => handleScan('demo_test_' + Date.now())}>
+                <Barcode size={20} /> {scanning ? 'Escaneando…' : 'Simular escaneo'}
+              </button>
+            )}
+            <div className="acc-sim-row">
+              <button
+                onClick={() => { setMode('scanner'); setCameraError(''); reset() }}
+                style={{ background: mode === 'scanner' ? 'rgba(167,139,250,0.25)' : undefined, borderColor: mode === 'scanner' ? 'rgba(167,139,250,0.5)' : undefined }}
+              >
+                <Barcode size={14} /> Lector
+              </button>
+              <button
+                onClick={() => { setMode('camera'); setCameraError(''); reset() }}
+                style={{ background: mode === 'camera' ? 'rgba(167,139,250,0.25)' : undefined, borderColor: mode === 'camera' ? 'rgba(167,139,250,0.5)' : undefined }}
+              >
+                <ScanLine size={14} /> Cámara
+              </button>
+              <button
+                onClick={() => { setMode('manual'); reset() }}
+                style={{ background: mode === 'manual' ? 'rgba(167,139,250,0.25)' : undefined, borderColor: mode === 'manual' ? 'rgba(167,139,250,0.5)' : undefined }}
+              >
+                <Keyboard size={14} /> Manual
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Scanner area */}
-        {mode === 'camera' ? (
-          <div style={{
-            flex: 1,
-            background: '#000',
-            borderRadius: 'var(--radius-md)',
-            overflow: 'hidden',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 300,
-          }}>
-            {cameraError ? (
-              <div style={{ color: 'white', textAlign: 'center', padding: '2rem' }}>
-                <p style={{ marginBottom: '0.75rem' }}>{cameraError}</p>
-                <button onClick={() => setMode('scanner')} className="btn btn-primary">Usar Lector Físico</button>
+        {/* Recent scans */}
+        <div className="acc-recent">
+          <h4>Últimos escaneos</h4>
+          {recentScans.length === 0 ? (
+            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', textAlign: 'center', padding: '0.5rem 0' }}>
+              Sin escaneos aún
+            </div>
+          ) : (
+            recentScans.map(s => (
+              <div key={s.id} className="acc-recent-row">
+                <div className={`ic ${s.result}`}>
+                  {s.result === 'valid' ? <Check size={15} /> : s.result === 'used' ? <RotateCcw size={15} /> : <X size={15} />}
+                </div>
+                <div className="tx">
+                  <b>{s.name}</b>
+                  <span>{s.seat}</span>
+                </div>
+                <div className="tm">{s.time}</div>
               </div>
-            ) : (
-              <div id={SCANNER_ID} style={{ width: '100%', height: '100%' }} />
-            )}
-            {loading && (
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'rgba(0,0,0,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <div className="spinner" style={{ width: 40, height: 40, borderWidth: 4, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: 'white' }} />
-              </div>
-            )}
-          </div>
-        ) : mode === 'scanner' ? (
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1.5rem',
-            padding: '2rem',
-            background: 'white',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-sm)',
-          }}>
-            <Barcode size={64} style={{ color: 'var(--color-primary)' }} />
-            <div style={{ textAlign: 'center' }}>
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>Lector Físico</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                Escanea el código con el lector AON HS-200
-              </p>
-            </div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 1rem',
-              background: 'var(--color-primary-light)',
-              borderRadius: '999px',
-              color: 'var(--color-primary)',
-              fontSize: '0.8125rem',
-              fontWeight: 500,
-            }}>
-              <span style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: scanSuccess ? 'var(--color-success)' : 'var(--color-primary)',
-                animation: scanSuccess ? 'none' : 'pulse 1.5s infinite',
-              }} />
-              {scanSuccess ? '¡Escaneado exitosamente!' : 'Listo para escanear'}
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleManualSubmit} style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem',
-            justifyContent: 'center',
-            padding: '1rem',
-            background: 'white',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: 'var(--shadow-sm)',
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <Keyboard size={48} style={{ color: 'var(--color-text-muted)', marginBottom: '0.75rem' }} />
-              <h3 style={{ fontSize: '1.125rem', marginBottom: '0.25rem' }}>Ingreso Manual</h3>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
-                Ingresa el código manualmente
-              </p>
-            </div>
-            <input
-              ref={manualRef}
-              type="text"
-              value={manualInput}
-              onChange={e => setManualInput(e.target.value)}
-              placeholder="Código QR..."
-              autoFocus
-              style={{ textAlign: 'center', fontSize: '1.125rem', padding: '1rem' }}
-            />
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading || !manualInput.trim()}>
-              {loading ? <span className="spinner" style={{ width: 20, height: 20, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: 'white' }} /> : 'Validar'}
-            </button>
-          </form>
-        )}
+            ))
+          )}
+        </div>
 
-        {/* Scanner status */}
-        {mode === 'camera' && !cameraError && (
-          <div style={{
-            textAlign: 'center',
-            padding: '0.75rem',
-            fontSize: '0.8125rem',
-            color: 'var(--color-text-muted)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-          }}>
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: scanSuccess ? 'var(--color-success)' : 'var(--color-primary)',
-              animation: scanSuccess ? 'none' : 'pulse 1.5s infinite',
-            }} />
-            {scanSuccess ? '¡Escaneado exitosamente!' : 'Esperando código QR...'}
-          </div>
-        )}
+        {/* Full-screen result overlay */}
+        {result && <ResultOverlay result={result} onClose={resetAndRetry} />}
       </div>
-
-      {/* Result overlay */}
-      {result && <ResultOverlay result={result} onClose={resetAndRetry} />}
     </div>
   )
 }
