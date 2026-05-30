@@ -20,6 +20,7 @@ export function useValidation() {
   const validate = useCallback(async (token: string) => {
     setLoading(true)
     setResult(null)
+    console.log('[validate] token:', token)
     try {
       const data = await api.post<ValidationResult>('/tickets/validate', { token })
       setResult(data)
