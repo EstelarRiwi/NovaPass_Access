@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LogIn, ScanLine, ShieldCheck, Zap } from 'lucide-react'
+import { LogIn, ShieldAlert, BugPlay } from 'lucide-react'
 
 export default function Login() {
-  const { login, loading } = useAuth()
+  const { login, demoLogin, loading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -20,120 +20,109 @@ export default function Login() {
 
   return (
     <div style={{
-      position: 'relative',
-      minHeight: '100dvh',
+      minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'var(--color-bg)',
-      overflow: 'hidden',
-      padding: '2rem 1.5rem',
+      background: 'linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)',
+      padding: '1.5rem',
     }}>
       <div style={{
-        position: 'absolute', width: 600, height: 600, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(147, 51, 234, 0.2) 0%, transparent 70%)',
-        top: -200, right: -180, pointerEvents: 'none',
-        animation: 'float 9s ease-in-out infinite',
-      }} />
-      <div style={{
-        position: 'absolute', width: 400, height: 400, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(245, 158, 11, 0.09) 0%, transparent 70%)',
-        bottom: -120, left: -100, pointerEvents: 'none',
-        animation: 'float-reverse 12s ease-in-out infinite',
-      }} />
-      <div style={{
-        position: 'absolute', width: 280, height: 280, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(147, 51, 234, 0.1) 0%, transparent 70%)',
-        bottom: '30%', right: '10%', pointerEvents: 'none',
-        animation: 'float 14s ease-in-out infinite 3s',
-      }} />
-
-      <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }} className="slide-in-up">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
+        width: '100%',
+        maxWidth: 400,
+        background: 'white',
+        borderRadius: 'var(--radius-lg)',
+        padding: '2.5rem',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.625rem',
-            fontFamily: 'var(--font-heading)', fontSize: '2.25rem',
-            color: 'var(--color-primary-light)',
-            textShadow: '0 0 40px rgba(192, 132, 252, 0.55)',
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: 'var(--color-bg-alt)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1rem',
           }}>
-            <Zap size={30} fill="currentColor" />
-            NovaPass
+            <ShieldAlert size={32} color="var(--color-primary)" />
           </div>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'rgba(147, 51, 234, 0.1)',
-            border: '1px solid rgba(147, 51, 234, 0.25)',
-            borderRadius: '999px', padding: '0.375rem 0.875rem',
-            fontSize: '0.75rem', color: 'var(--color-text-muted)',
-            letterSpacing: '0.05em', textTransform: 'uppercase' as const,
-          }}>
-            <ScanLine size={12} />
-            Control de Acceso
-          </div>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>NovaPass — Control de Acceso</h2>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+            Personal de portería
+          </p>
         </div>
 
-        <div className="card" style={{ padding: '2rem 2rem 1.75rem' }}>
-          <h2 style={{
-            textAlign: 'center', fontSize: '1.375rem', marginBottom: '1.75rem',
-            fontFamily: 'var(--font-heading)',
-            background: 'linear-gradient(135deg, var(--color-text) 0%, var(--color-primary-light) 100%)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        {error && (
+          <div style={{
+            background: '#FEE2E2',
+            color: '#991B1B',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-sm)',
+            marginBottom: '1rem',
+            fontSize: '0.875rem',
+            textAlign: 'center',
           }}>
-            Iniciar Sesión
-          </h2>
+            {error}
+          </div>
+        )}
 
-          {error && (
-            <div className="alert-error" style={{ marginBottom: '1.25rem', textAlign: 'center' }}>
-              {error}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ fontWeight: 500, fontSize: '0.875rem', marginBottom: '0.375rem', display: 'block' }}>
+              Usuario
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="correo@ejemplo.com"
+              required
+              autoFocus
+            />
+          </div>
+          <div>
+            <label style={{ fontWeight: 500, fontSize: '0.875rem', marginBottom: '0.375rem', display: 'block' }}>
+              Contraseña
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+            {loading ? (
+              <span className="spinner" style={{ width: 20, height: 20, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: 'white' }} />
+            ) : (
+              <><LogIn size={18} /> Ingresar</>
+            )}
+          </button>
+        </form>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label htmlFor="email">Correo electrónico</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="porteria@estelar.com"
-                required
-                autoFocus
-              />
-            </div>
-            <div>
-              <label htmlFor="password">Contraseña</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg"
-              disabled={loading}
-              style={{ marginTop: '0.5rem' }}
-            >
-              {loading
-                ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} />
-                : <><LogIn size={18} /> Ingresar</>
-              }
-            </button>
-          </form>
-        </div>
-
-        <p style={{
-          textAlign: 'center', marginTop: '1.75rem', fontSize: '0.8125rem',
-          color: 'var(--color-text-muted)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.375rem',
+        <div style={{
+          marginTop: '1.5rem',
+          paddingTop: '1.5rem',
+          borderTop: '1px solid var(--color-border)',
         }}>
-          <ShieldCheck size={13} />
-          Solo para personal de portería autorizado
-        </p>
+          <button
+            type="button"
+            onClick={demoLogin}
+            disabled={loading}
+            className="btn btn-lg"
+            style={{
+              width: '100%',
+              background: '#F3E8FF',
+              color: 'var(--color-primary)',
+              fontWeight: 600,
+            }}
+          >
+            <BugPlay size={18} /> Modo Demo (sin backend)
+          </button>
+        </div>
       </div>
     </div>
   )

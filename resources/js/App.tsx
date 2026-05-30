@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Scanner from './pages/Scanner'
-import ErrorBoundary from './components/ErrorBoundary'
 import NotFound from './pages/NotFound'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
