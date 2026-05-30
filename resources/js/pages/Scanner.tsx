@@ -3,7 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { useValidation } from '../hooks/useValidation'
 import { useEntryCount } from '../hooks/useEntryCount'
 import { useAuth } from '../context/AuthContext'
-import { ScanLine, Keyboard, Barcode, LogOut, Check, X, RotateCcw } from 'lucide-react'
+import { ScanLine, Keyboard, LogOut, Check, X, RotateCcw } from 'lucide-react'
 import ResultOverlay from '../components/ResultOverlay'
 
 const SCANNER_ID = 'qr-scanner'
@@ -253,19 +253,14 @@ export default function Scanner() {
           </div>
           <div className={`vf-flash ${flash ? 'on' : ''}`} />
 
-          {/* Sim controls at bottom of viewfinder */}
+          {/* Mode selector */}
           <div className="acc-sim">
-            {mode === 'scanner' && (
-              <button className="acc-scan-btn" disabled={scanning} onClick={() => handleScan('demo_test_' + Date.now())}>
-                <Barcode size={20} /> {scanning ? 'Escaneando…' : 'Simular escaneo'}
-              </button>
-            )}
             <div className="acc-sim-row">
               <button
                 onClick={() => { setMode('scanner'); setCameraError(''); reset() }}
                 style={{ background: mode === 'scanner' ? 'rgba(167,139,250,0.25)' : undefined, borderColor: mode === 'scanner' ? 'rgba(167,139,250,0.5)' : undefined }}
               >
-                <Barcode size={14} /> Lector
+                <ScanLine size={14} /> Lector
               </button>
               <button
                 onClick={() => { setMode('camera'); setCameraError(''); reset() }}

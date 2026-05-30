@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LogIn, ShieldAlert, BugPlay } from 'lucide-react'
+import { LogIn, ScanLine } from 'lucide-react'
 
 export default function Login() {
-  const { login, demoLogin, loading } = useAuth()
+  const { login, loading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -20,108 +20,137 @@ export default function Login() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)',
+      background: 'radial-gradient(1200px 700px at 50% -10%, #3a1d6e 0%, #1a0f2e 55%, #120a20 100%)',
       padding: '1.5rem',
     }}>
       <div style={{
         width: '100%',
-        maxWidth: 400,
-        background: 'white',
-        borderRadius: 'var(--radius-lg)',
-        padding: '2.5rem',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        maxWidth: 380,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '1.8rem',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        {/* Brand */}
+        <div style={{ textAlign: 'center' }}>
           <div style={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: 'var(--color-bg-alt)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: 56, height: 56, borderRadius: 16,
+            background: 'linear-gradient(135deg, #7C3AED, #F97316)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 1rem',
+            boxShadow: '0 0 32px rgba(124,58,237,0.5)',
           }}>
-            <ShieldAlert size={32} color="var(--color-primary)" />
+            <ScanLine size={26} color="#fff" />
           </div>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>NovaPass — Control de Acceso</h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-            Personal de portería
-          </p>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: '#fff' }}>
+            NovaPass <span style={{ fontWeight: 500, opacity: 0.7 }}>Acceso</span>
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'rgba(196,167,250,0.8)', marginTop: '0.4rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            Control de entrada · Personal autorizado
+          </div>
         </div>
 
-        {error && (
-          <div style={{
-            background: '#FEE2E2',
-            color: '#991B1B',
-            padding: '0.75rem',
-            borderRadius: 'var(--radius-sm)',
-            marginBottom: '1rem',
-            fontSize: '0.875rem',
-            textAlign: 'center',
-          }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label style={{ fontWeight: 500, fontSize: '0.875rem', marginBottom: '0.375rem', display: 'block' }}>
-              Usuario
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="correo@ejemplo.com"
-              required
-              autoFocus
-            />
-          </div>
-          <div>
-            <label style={{ fontWeight: 500, fontSize: '0.875rem', marginBottom: '0.375rem', display: 'block' }}>
-              Contraseña
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-            {loading ? (
-              <span className="spinner" style={{ width: 20, height: 20, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: 'white' }} />
-            ) : (
-              <><LogIn size={18} /> Ingresar</>
-            )}
-          </button>
-        </form>
-
+        {/* Card */}
         <div style={{
-          marginTop: '1.5rem',
-          paddingTop: '1.5rem',
-          borderTop: '1px solid var(--color-border)',
+          width: '100%',
+          background: 'rgba(255,255,255,0.07)',
+          border: '1.5px solid rgba(255,255,255,0.14)',
+          borderRadius: 24,
+          padding: '2rem',
+          backdropFilter: 'blur(16px)',
         }}>
-          <button
-            type="button"
-            onClick={demoLogin}
-            disabled={loading}
-            className="btn btn-lg"
-            style={{
-              width: '100%',
-              background: '#F3E8FF',
-              color: 'var(--color-primary)',
-              fontWeight: 600,
-            }}
-          >
-            <BugPlay size={18} /> Modo Demo (sin backend)
-          </button>
+          {error && (
+            <div style={{
+              background: 'rgba(239,68,68,0.15)',
+              border: '1px solid rgba(239,68,68,0.35)',
+              color: '#FCA5A5',
+              padding: '0.75rem 1rem',
+              borderRadius: 12,
+              marginBottom: '1.25rem',
+              fontSize: '0.875rem',
+              textAlign: 'center',
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.4rem', display: 'block', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Correo electrónico
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="portero@estelar.com"
+                required
+                autoFocus
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1.5px solid rgba(255,255,255,0.18)',
+                  borderRadius: 12,
+                  padding: '0.85rem 1rem',
+                  color: '#fff',
+                  fontSize: '0.95rem',
+                  width: '100%',
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.4rem', display: 'block', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Contraseña
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1.5px solid rgba(255,255,255,0.18)',
+                  borderRadius: 12,
+                  padding: '0.85rem 1rem',
+                  color: '#fff',
+                  fontSize: '0.95rem',
+                  width: '100%',
+                }}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                marginTop: '0.5rem',
+                width: '100%',
+                padding: '1rem',
+                borderRadius: 14,
+                background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                color: '#fff',
+                fontWeight: 800,
+                fontSize: '1rem',
+                fontFamily: 'var(--font-body)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 0 24px rgba(124,58,237,0.4)',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+                border: 'none',
+              }}
+            >
+              {loading
+                ? <span className="spinner" style={{ width: 20, height: 20, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: 'white' }} />
+                : <><LogIn size={18} /> Ingresar al sistema</>
+              }
+            </button>
+          </form>
         </div>
       </div>
     </div>
