@@ -159,30 +159,8 @@ export default function Scanner() {
   }
 
   return (
-    <div className="acc-stage">
-      {/* Brand header above phone */}
-      <div className="acc-stage-head">
-        <div className="brand">
-          <span className="mark">
-            <ScanLine size={19} />
-          </span>
-          NovaPass <span style={{ fontWeight: 500, opacity: 0.7 }}>Acceso</span>
-        </div>
-        <div className="tag">Control de entrada · Personal autorizado</div>
-      </div>
-
-      {/* Phone frame */}
-      <div className="phone">
-        <div className="phone-notch" />
-        <div className="phone-status">
-          <span>{now()}</span>
-          <span style={{ display: 'flex', gap: 5, alignItems: 'center', fontSize: '0.72rem' }}>
-            <span>5G</span>
-            <span>92%</span>
-          </span>
-        </div>
-
-        {/* Top bar */}
+    <div className="acc-app">
+      {/* Top bar */}
         <div className="acc-top">
           <div className="who">
             <div className="av" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem' }}>
@@ -328,9 +306,8 @@ export default function Scanner() {
           )}
         </div>
 
-        {/* Full-screen result overlay */}
-        {result && <ResultOverlay result={result} onClose={resetAndRetry} />}
-      </div>
+      {/* Full-screen result overlay */}
+      {result && <ResultOverlay result={result} onClose={resetAndRetry} />}
     </div>
   )
 }
